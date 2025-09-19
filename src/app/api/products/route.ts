@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { products, productPrices, productImages, categories } from '@/db/schema';
-import { eq, like, and, or, desc, asc, sql, inArray } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 interface ProductResponse {
   id: number;
@@ -18,10 +18,10 @@ interface ProductResponse {
     minWholesaleQty?: number;
     taxRate: number;
   };
-  image?: {
+  images: {
     url: string;
     alt: string;
-  };
+  }[];
   category: {
     id: number;
     name: string;
@@ -30,75 +30,22 @@ interface ProductResponse {
   };
 }
 
-interface PaginatedResponse {
-  products: ProductResponse[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
+// Define the params interface for the dynamic route
+interface RouteParams {
+  params: {
+    slug: string;
   };
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: RouteParams
+) {
   try {
-    const searchParams = request.nextUrl.searchParams;
+    const { slug } = params;
     
-    // Pagination parameters
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
-    const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '20')));
-    const offset = (page - 1) * pageSize;
-    
-    // Search and filter parameters
-    const search = searchParams.get('q');
-    const category = searchParams.get('category');
-    const status = searchParams.get('status') || 'active';
-    const sort = searchParams.get('sort') || 'created_at';
-    const order = searchParams.get('order') === 'asc' ? 'asc' : 'desc';
-    
-    // Build where conditions
-    const conditions = [eq(products.status, status)];
-    
-    if (search) {
-      conditions.push(
-        or(
-          like(products.name, `%${search}%`),
-          like(products.description, `%${search}%`),
-          like(products.sku, `%${search}%`)
-        )
-      );
-    }
-    
-    if (category) {
-      // Check if category is slug or ID
-      const isCategoryId = !isNaN(parseInt(category));
-      if (isCategoryId) {
-        conditions.push(eq(products.categoryId, parseInt(category)));
-      } else {
-        const categoryData = await db.select({ id: categories.id })
-          .from(categories)
-          .where(eq(categories.slug, category))
-          .limit(1);
-        
-        if (categoryData.length > 0) {
-          conditions.push(eq(products.categoryId, categoryData[0].id));
-        } else {
-          // Return empty result if category not found
-          return NextResponse.json({
-            products: [],
-            pagination: {
-              page,
-              pageSize,
-              total: 0,
-              totalPages: 0
-            }
-          });
-        }
-      }
-    }
-    
-    // Build base query
-    let baseQuery = db.select({
+    // Get the product by slug
+    const productData = await db.select({
       id: products.id,
       slug: products.slug,
       name: products.name,
@@ -107,6 +54,7 @@ export async function GET(request: NextRequest) {
       stock: products.stock,
       unit: products.unit,
       tags: products.tags,
+      status: products.status,
       categoryId: products.categoryId,
       retailPrice: productPrices.retailPrice,
       wholesalePrice: productPrices.wholesalePrice,
@@ -119,95 +67,66 @@ export async function GET(request: NextRequest) {
       .from(products)
       .leftJoin(productPrices, eq(products.id, productPrices.productId))
       .leftJoin(categories, eq(products.categoryId, categories.id))
-      .where(and(...conditions));
-    
-    // Apply sorting
-    const sortColumn = {
-      'name': products.name,
-      'price': productPrices.retailPrice,
-      'created_at': products.createdAt
-    }[sort] || products.createdAt;
-    
-    baseQuery = baseQuery.orderBy(order === 'asc' ? asc(sortColumn) : desc(sortColumn));
-    
-    // Get total count
-    const countResult = await db.select({
-      count: sql<number>`count(*)`
-    }).from(products)
-      .leftJoin(productPrices, eq(products.id, productPrices.productId))
-      .leftJoin(categories, eq(products.categoryId, categories.id))
-      .where(and(...conditions));
-    
-    const total = countResult[0]?.count || 0;
-    
-    // Get paginated results
-    const rawProducts = await baseQuery.limit(pageSize).offset(offset);
-    
-    // Get first image for each product
-    const productIds = rawProducts.map(p => p.id);
-    let productImagesMap: Record<number, { url: string; alt: string }> = {};
-    
-    if (productIds.length > 0) {
-      const images = await db.select({
-        productId: productImages.productId,
-        url: productImages.url,
-        alt: productImages.alt
-      })
-        .from(productImages)
-        .where(inArray(productImages.productId, productIds))
-        .orderBy(asc(productImages.sortOrder));
-      
-      images.forEach(img => {
-        if (!productImagesMap[img.productId]) {
-          productImagesMap[img.productId] = {
-            url: img.url,
-            alt: img.alt || ''
-          };
-        }
-      });
+      .where(
+        and(
+          eq(products.slug, slug),
+          eq(products.status, 'active')
+        )
+      )
+      .limit(1);
+
+    if (productData.length === 0) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      );
     }
-    
-    // Process products
-    const processedProducts: ProductResponse[] = rawProducts.map(product => {
-      return {
-        id: product.id,
-        slug: product.slug,
-        name: product.name,
-        description: product.description || '',
-        sku: product.sku,
-        stock: product.stock || 0,
-        unit: product.unit || 'piece',
-        tags: product.tags ? JSON.parse(product.tags) : [],
-        price: {
-          retail: product.retailPrice || 0,
-          wholesale: product.wholesalePrice || undefined,
-          minWholesaleQty: product.minWholesaleQty || undefined,
-          taxRate: product.taxRate || 0.18
-        },
-        image: productImagesMap[product.id],
-        category: {
-          id: product.categoryId,
-          name: product.categoryName || '',
-          slug: product.categorySlug || '',
-          requiresAgeVerification: Boolean(product.requiresAgeVerification)
-        }
-      };
-    });
-    
-    return NextResponse.json({
-      products: processedProducts,
-      pagination: {
-        page,
-        pageSize,
-        total,
-        totalPages: Math.ceil(total / pageSize)
+
+    const product = productData[0];
+
+    // Get all images for this product
+    const images = await db.select({
+      url: productImages.url,
+      alt: productImages.alt
+    })
+      .from(productImages)
+      .where(eq(productImages.productId, product.id))
+      .orderBy(productImages.sortOrder);
+
+    // Process the product data
+    const processedProduct: ProductResponse = {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      description: product.description || '',
+      sku: product.sku,
+      stock: product.stock || 0,
+      unit: product.unit || 'piece',
+      tags: product.tags ? JSON.parse(product.tags) : [],
+      price: {
+        retail: product.retailPrice || 0,
+        wholesale: product.wholesalePrice || undefined,
+        minWholesaleQty: product.minWholesaleQty || undefined,
+        taxRate: product.taxRate || 0.18
+      },
+      images: images.map(img => ({
+        url: img.url,
+        alt: img.alt || ''
+      })),
+      category: {
+        id: product.categoryId,
+        name: product.categoryName || '',
+        slug: product.categorySlug || '',
+        requiresAgeVerification: Boolean(product.requiresAgeVerification)
       }
-    });
+    };
+
+    return NextResponse.json(processedProduct);
     
   } catch (error) {
-    console.error('Products GET error:', error);
+    console.error('Product GET error:', error);
     return NextResponse.json({ 
-      error: 'Failed to fetch products',
+      error: 'Failed to fetch product',
       message: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
