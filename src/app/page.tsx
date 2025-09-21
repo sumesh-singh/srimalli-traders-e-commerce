@@ -141,7 +141,8 @@ export default function Home() {
             </p>
             <div className="flex gap-3 mt-4">
               <Link href="/products"><Button className="bg-orange-500 hover:bg-orange-600">Shop Now</Button></Link>
-              <Link href="#categories"><Button variant="outline" className="border-white text-white hover:bg-white/10">Browse Categories</Button></Link>
+              <Link href="#categories"><Button variant="outline" className="border-white/80 text-white hover:bg-white/20 hover:text-white">Browse Categories</Button></Link>
+              <Link href="/cart"><Button variant="secondary" className="bg-white/90 text-orange-700 hover:bg-white">View Cart</Button></Link>
             </div>
           </div>
         </div>
