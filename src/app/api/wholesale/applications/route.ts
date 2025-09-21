@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { wholesaleProfiles, users } from '@/db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     // Get total count for pagination
     let countQuery = db
-      .select({ count: sql<number>`count(*)`` })
+      .select({ count: sql<number>`count(*)` })
       .from(wholesaleProfiles);
 
     if (status && ['pending', 'approved', 'rejected'].includes(status)) {
