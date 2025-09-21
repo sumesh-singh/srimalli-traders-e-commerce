@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import "locomotive-scroll/dist/locomotive-scroll.css";
 
 type Category = {
   id: number;
@@ -52,6 +53,26 @@ export default function Home() {
   const [category, setCategory] = useState<string>("all");
   const [sort, setSort] = useState<string>("created_at");
   const sessionId = useSessionId();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let scroll: any;
+    (async () => {
+      const mod = await import("locomotive-scroll");
+      const LocomotiveScroll = mod.default;
+      if (containerRef.current) {
+        scroll = new LocomotiveScroll({
+          el: containerRef.current,
+          smooth: true,
+          smartphone: { smooth: true },
+          tablet: { smooth: true },
+        });
+      }
+    })();
+    return () => {
+      if (scroll) scroll.destroy();
+    };
+  }, []);
 
   useEffect(() => {
     fetch("/api/categories")
@@ -89,42 +110,50 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <div ref={containerRef} data-scroll-container className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       {/* Top promo bar */}
-      <div className="w-full bg-orange-500 text-white text-center text-sm py-2 px-4">
+      <div className="w-full bg-orange-500/80 backdrop-blur-sm text-white text-center text-sm py-2 px-4 border-b border-white/10">
         Diwali Specials live now! Retail up to 15% off and Wholesale bundle savings.
       </div>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden" data-scroll-section>
         <Image
           src="https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?q=80&w=2000&auto=format&fit=crop"
           alt="Fireworks celebration banner"
           width={2400}
           height={1200}
           priority
-          className="w-full h-[48vh] object-cover"
+          data-scroll
+          data-scroll-speed="-1"
+          className="w-full h-[48vh] object-cover will-change-transform"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/20" />
-        <div className="absolute inset-0 max-w-6xl mx-auto px-4 flex flex-col justify-center gap-4">
-          <h1 className="text-3xl sm:text-5xl font-bold text-white">Sri Mallikarjuna Traders</h1>
-          <p className="text-white/90 max-w-xl">
-            Retail and Wholesale fireworks with dual pricing. Quality sparklers, rockets, flower pots, gift boxes and more.
-          </p>
-          <div className="flex gap-3">
-            <Link href="/products"><Button className="bg-orange-500 hover:bg-orange-600">Shop Now</Button></Link>
-            <Link href="#categories"><Button variant="outline" className="border-white text-white hover:bg-white/10">Browse Categories</Button></Link>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/20" data-scroll data-scroll-speed="-0.5" />
+        <div
+          className="absolute inset-0 max-w-6xl mx-auto px-4 flex flex-col justify-center gap-4"
+          data-scroll
+          data-scroll-speed="0.2"
+        >
+          <div className="max-w-xl rounded-xl bg-white/10 border border-white/20 backdrop-blur-md p-6 text-white shadow-lg">
+            <h1 className="text-3xl sm:text-5xl font-bold">Sri Mallikarjuna Traders</h1>
+            <p className="text-white/90 mt-2">
+              Retail and Wholesale fireworks with dual pricing. Quality sparklers, rockets, flower pots, gift boxes and more.
+            </p>
+            <div className="flex gap-3 mt-4">
+              <Link href="/products"><Button className="bg-orange-500 hover:bg-orange-600">Shop Now</Button></Link>
+              <Link href="#categories"><Button variant="outline" className="border-white text-white hover:bg-white/10">Browse Categories</Button></Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Category Navigation */}
-      <section id="categories" className="max-w-6xl mx-auto px-4 py-8">
+      <section id="categories" className="max-w-6xl mx-auto px-4 py-8" data-scroll-section>
         <h2 className="text-xl font-semibold mb-4">Categories</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           {flatCategories.map((c) => (
             <Link key={c.slug} href={`/products?category=${c.slug}`} className="">
-              <Card className="hover:shadow-md transition">
+              <Card className="hover:shadow-md transition bg-white/5 dark:bg-white/5 border-white/10 backdrop-blur-md">
                 <CardContent className="p-3 flex flex-col items-center text-center gap-1">
                   <span className="text-sm font-medium">{c.name}</span>
                   <span className="text-xs text-muted-foreground">{c.productCount} items</span>
@@ -137,13 +166,13 @@ export default function Home() {
       </section>
 
       {/* Featured Products with search/sort */}
-      <section className="max-w-6xl mx-auto px-4 pb-12">
+      <section className="max-w-6xl mx-auto px-4 pb-12" data-scroll-section>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <h2 className="text-xl font-semibold">Featured Products</h2>
           <div className="flex gap-2 items-center">
-            <Input placeholder="Search products" value={search} onChange={(e) => setSearch(e.target.value)} className="w-48" />
+            <Input placeholder="Search products" value={search} onChange={(e) => setSearch(e.target.value)} className="w-48 bg-white/5 backdrop-blur-sm" />
             <Select value={sort} onValueChange={setSort}>
-              <SelectTrigger className="w-44"><SelectValue placeholder="Sort by" /></SelectTrigger>
+              <SelectTrigger className="w-44 bg-white/5 backdrop-blur-sm"><SelectValue placeholder="Sort by" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="created_at">Newest</SelectItem>
                 <SelectItem value="name">Name A-Z</SelectItem>
@@ -154,7 +183,7 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {products.map((p) => (
-            <Card key={p.id} className="flex flex-col">
+            <Card key={p.id} className="flex flex-col bg-white/5 border-white/10 backdrop-blur-md hover:translate-y-0.5 transition">
               <CardHeader className="p-0">
                 <Link href={`/products/${p.slug}`}>
                   <div className="relative w-full h-48 bg-muted">
@@ -177,7 +206,7 @@ export default function Home() {
                 </div>
               </CardContent>
               <CardFooter className="p-4 pt-0 flex gap-2">
-                <Button className="bg-orange-500 hover:bg-orange-600" onClick={() => addToCart(p.id, "retail")}>Add</Button>
+                <Button className="bg-orange-500/90 hover:bg-orange-600" onClick={() => addToCart(p.id, "retail")}>Add</Button>
                 {p.price.wholesale !== undefined && (
                   <Button variant="outline" onClick={() => addToCart(p.id, "wholesale")}>Wholesale</Button>
                 )}
@@ -191,7 +220,7 @@ export default function Home() {
       </section>
 
       {/* Seasonal Promotion Strip */}
-      <section className="bg-blue-600 text-white">
+      <section className="bg-blue-600/80 backdrop-blur-md text-white" data-scroll-section>
         <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div>
             <div className="text-lg font-semibold">Seasonal Wholesale Combos</div>
@@ -201,7 +230,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="text-center text-sm text-muted-foreground py-8">
+      <footer className="text-center text-sm text-muted-foreground py-8" data-scroll-section>
         © {new Date().getFullYear()} Sri Mallikarjuna Traders. All rights reserved.
       </footer>
     </div>
