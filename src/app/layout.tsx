@@ -3,6 +3,8 @@ import "./globals.css";
 import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
+import { Navbar } from "@/components/Navbar";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Sri Mallikarjuna Traders | Fireworks B2C & B2B",
@@ -46,7 +48,9 @@ export default function RootLayout({
             });
           }
         `}</Script>
+        <Navbar />
         {children}
+        <Toaster richColors position="top-right" />
         <VisualEditsMessenger />
       </body>
     </html>

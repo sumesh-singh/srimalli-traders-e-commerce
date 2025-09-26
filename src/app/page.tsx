@@ -126,9 +126,9 @@ export default function Home() {
           priority
           data-scroll
           data-scroll-speed="-1"
-          className="w-full h-[48vh] object-cover will-change-transform"
+          className="w-full h-[60vh] md:h-[72vh] object-cover will-change-transform scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/20" data-scroll data-scroll-speed="-0.5" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" data-scroll data-scroll-speed="-0.5" />
         <div
           className="absolute inset-0 max-w-6xl mx-auto px-4 flex flex-col justify-center gap-4"
           data-scroll
@@ -184,14 +184,14 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {products.map((p) => (
-            <Card key={p.id} className="flex flex-col bg-white/5 border-white/10 backdrop-blur-md hover:translate-y-0.5 transition">
+            <Card key={p.id} className="flex flex-col bg-white/5 border-white/10 backdrop-blur-md hover:translate-y-0.5 hover:shadow-lg transition">
               <CardHeader className="p-0">
                 <Link href={`/products/${p.slug}`}>
-                  <div className="relative w-full h-48 bg-muted">
+                  <div className="group relative w-full h-48 bg-muted overflow-hidden rounded-lg">
                     {p.image?.url ? (
-                      <Image src={p.image.url} alt={p.image.alt || p.name} fill className="object-cover" />
+                      <Image src={p.image.url} alt={p.image.alt || p.name} fill className="object-cover transition-transform duration-500 ease-out group-hover:scale-110" />
                     ) : (
-                      <Image src="https://images.unsplash.com/photo-1447426732136-994b56f37f4f?q=80&w=1200&auto=format&fit=crop" alt={p.name} fill className="object-cover" />
+                      <Image src="https://images.unsplash.com/photo-1447426732136-994b56f37f4f?q=80&w=1200&auto=format&fit=crop" alt={p.name} fill className="object-cover transition-transform duration-500 ease-out group-hover:scale-110" />
                     )}
                   </div>
                 </Link>

@@ -66,6 +66,7 @@
         "estree-walker": "2.0.2",
         "framer-motion": "^12.23.12",
         "input-otp": "^1.4.2",
+        "locomotive-scroll": "^4",
         "lucide-react": "^0.544.0",
         "mini-svg-data-uri": "^1.4.4",
         "motion": "^12.23.12",
