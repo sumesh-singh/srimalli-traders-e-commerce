@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { headers } from "next/headers";
 
 async function getProducts(searchParams: Record<string, string | string[] | undefined>) {
   const params = new URLSearchParams();
@@ -12,9 +13,19 @@ async function getProducts(searchParams: Record<string, string | string[] | unde
   if (typeof searchParams.sort === "string") params.set("sort", searchParams.sort);
   params.set("pageSize", "24");
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/products?${params.toString()}`, { cache: "no-store" });
-  if (!res.ok) return { products: [] };
-  return res.json();
+  // Build absolute base URL for server-side fetch
+  const h = headers();
+  const host = h.get("x-forwarded-host") || h.get("host") || "localhost:3000";
+  const proto = h.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+  const base = process.env.NEXT_PUBLIC_BASE_URL || `${proto}://${host}`;
+
+  try {
+    const res = await fetch(`${base}/api/products?${params.toString()}`, { cache: "no-store" });
+    if (!res.ok) return { products: [] };
+    return res.json();
+  } catch {
+    return { products: [] };
+  }
 }
 
 export default async function ProductsPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
