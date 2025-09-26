@@ -42,6 +42,7 @@ export default function CheckoutPage() {
   const [shippingAddressId, setShippingAddressId] = useState<string>("");
   const [billingAddressId, setBillingAddressId] = useState<string>("");
   const [ageVerified, setAgeVerified] = useState(false);
+  const [deliveryOption, setDeliveryOption] = useState<"standard" | "express">("standard");
 
   // Load cart
   useEffect(() => {
@@ -97,6 +98,7 @@ export default function CheckoutPage() {
           shippingAddressId: Number(shippingAddressId),
           billingAddressId: billingAddressId ? Number(billingAddressId) : undefined,
           ageVerified,
+          deliveryOption, // pass selected delivery option
         }),
       });
       const data = await res.json();
@@ -161,6 +163,35 @@ export default function CheckoutPage() {
                 <Input id="billId" placeholder="e.g., 1" value={billingAddressId} onChange={(e) => setBillingAddressId(e.target.value)} />
               </div>
             </div>
+
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Delivery Options</div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <label className={`flex-1 cursor-pointer rounded-md border p-3 text-sm ${deliveryOption === "standard" ? "bg-orange-500/10 border-orange-500" : "hover:bg-muted"}`}>
+                  <input
+                    type="radio"
+                    name="delivery"
+                    value="standard"
+                    className="mr-2"
+                    checked={deliveryOption === "standard"}
+                    onChange={() => setDeliveryOption("standard")}
+                  />
+                  Standard (3-5 days)
+                </label>
+                <label className={`flex-1 cursor-pointer rounded-md border p-3 text-sm ${deliveryOption === "express" ? "bg-orange-500/10 border-orange-500" : "hover:bg-muted"}`}>
+                  <input
+                    type="radio"
+                    name="delivery"
+                    value="express"
+                    className="mr-2"
+                    checked={deliveryOption === "express"}
+                    onChange={() => setDeliveryOption("express")}
+                  />
+                  Express (1-2 days)
+                </label>
+              </div>
+            </div>
+
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" className="size-4" checked={ageVerified} onChange={(e) => setAgeVerified(e.target.checked)} />
               I confirm I am 18+ and eligible to purchase age-restricted items.
@@ -181,6 +212,9 @@ export default function CheckoutPage() {
             <div className="flex justify-between"><span>Subtotal</span><span>₹{cart?.totals?.subtotal?.toFixed?.(2) ?? "0.00"}</span></div>
             <div className="flex justify-between"><span>Tax</span><span>₹{cart?.totals?.tax?.toFixed?.(2) ?? "0.00"}</span></div>
             <div className="flex justify-between font-semibold"><span>Total</span><span>₹{cart?.totals?.total?.toFixed?.(2) ?? "0.00"}</span></div>
+            <div className="mt-3 text-xs text-muted-foreground">
+              Safety note: Fireworks are hazardous materials. Store in a cool, dry place away from heat sources. Adult supervision (18+) required. Delivery timelines may vary during Diwali peak. By placing this order you agree to comply with local regulations.
+            </div>
           </CardContent>
           <CardFooter className="justify-between">
             <Link href="/products" className="text-sm text-muted-foreground">Continue shopping</Link>

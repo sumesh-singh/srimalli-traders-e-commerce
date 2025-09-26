@@ -66,7 +66,7 @@ export default function AdminOrdersPage() {
   const handleStatus = async (orderId: number, status: string) => {
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("bearer_token") : null;
-      const res = await fetch(`/api/orders/${orderId}`, {
+      const res = await fetch(`/api/orders/${orderId}?id=${orderId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -123,10 +123,11 @@ export default function AdminOrdersPage() {
                   </div>
                 )}
                 <div className="flex items-center gap-2 pt-3">
-                  <Button size="sm" variant="outline" onClick={() => handleStatus(o.id, "processing")}>Mark Processing</Button>
+                  <Button size="sm" variant="outline" onClick={() => handleStatus(o.id, "paid")}>Mark Paid</Button>
                   <Button size="sm" variant="outline" onClick={() => handleStatus(o.id, "shipped")}>Mark Shipped</Button>
-                  <Button size="sm" className="bg-orange-500 hover:bg-orange-600" onClick={() => handleStatus(o.id, "completed")}>Mark Completed</Button>
-                  <Link href={`/api/orders/${o.id}`} className="text-orange-600 hover:underline text-sm ml-auto">View receipt</Link>
+                  <Button size="sm" variant="outline" onClick={() => handleStatus(o.id, "delivered")}>Mark Delivered</Button>
+                  <Button size="sm" variant="destructive" onClick={() => handleStatus(o.id, "cancelled")}>Cancel</Button>
+                  <Link href={`/api/orders/${o.id}?id=${o.id}`} className="text-orange-600 hover:underline text-sm ml-auto">View receipt</Link>
                 </div>
               </CardContent>
             </Card>

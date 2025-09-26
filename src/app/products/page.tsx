@@ -48,12 +48,20 @@ export default async function ProductsPage({ searchParams }: { searchParams: Rec
 
   const currentCategory = typeof searchParams.category === "string" ? searchParams.category : "all";
   const currentSort = typeof searchParams.sort === "string" ? searchParams.sort : "created_at";
+  const currentInStock = typeof searchParams.inStock === "string" ? searchParams.inStock : null;
+  const currentWholesaleOnly = typeof searchParams.wholesaleOnly === "string" ? searchParams.wholesaleOnly : null;
+  const currentMin = typeof searchParams.minPrice === "string" ? searchParams.minPrice : null;
+  const currentMax = typeof searchParams.maxPrice === "string" ? searchParams.maxPrice : null;
 
   const buildHref = (overrides: Record<string, string | null>) => {
     const params = new URLSearchParams();
     if (typeof searchParams.q === "string") params.set("q", searchParams.q);
     if (typeof searchParams.category === "string") params.set("category", searchParams.category);
     if (typeof searchParams.sort === "string") params.set("sort", searchParams.sort);
+    if (typeof searchParams.inStock === "string") params.set("inStock", searchParams.inStock);
+    if (typeof searchParams.wholesaleOnly === "string") params.set("wholesaleOnly", searchParams.wholesaleOnly);
+    if (typeof searchParams.minPrice === "string") params.set("minPrice", searchParams.minPrice);
+    if (typeof searchParams.maxPrice === "string") params.set("maxPrice", searchParams.maxPrice);
     // apply overrides
     Object.entries(overrides).forEach(([k, v]) => {
       if (v === null) params.delete(k);
@@ -94,6 +102,23 @@ export default async function ProductsPage({ searchParams }: { searchParams: Rec
                 <span className="text-xs opacity-70">{c.productCount}</span>
               </Link>
             ))}
+
+            <div className="mt-5 pt-3 border-t border-border space-y-2">
+              <div className="text-sm font-medium">Filters</div>
+              <div className="flex flex-wrap gap-2">
+                <Link href={buildHref({ inStock: currentInStock === "true" ? null : "true" })} className={`px-2 py-1 rounded-md border text-xs ${currentInStock === "true" ? "bg-orange-500 text-white border-orange-600" : "hover:bg-muted"}`}>In Stock</Link>
+                <Link href={buildHref({ wholesaleOnly: currentWholesaleOnly === "true" ? null : "true" })} className={`px-2 py-1 rounded-md border text-xs ${currentWholesaleOnly === "true" ? "bg-orange-500 text-white border-orange-600" : "hover:bg-muted"}`}>Wholesale only</Link>
+              </div>
+              <div className="text-xs text-muted-foreground">Price</div>
+              <div className="flex flex-wrap gap-2">
+                <Link href={buildHref({ minPrice: null, maxPrice: "500" })} className={`px-2 py-1 rounded-md border text-xs ${currentMin === null && currentMax === "500" ? "bg-orange-500 text-white border-orange-600" : "hover:bg-muted"}`}>Under ₹500</Link>
+                <Link href={buildHref({ minPrice: "500", maxPrice: "1000" })} className={`px-2 py-1 rounded-md border text-xs ${currentMin === "500" && currentMax === "1000" ? "bg-orange-500 text-white border-orange-600" : "hover:bg-muted"}`}>₹500–₹1000</Link>
+                <Link href={buildHref({ minPrice: "1000", maxPrice: null })} className={`px-2 py-1 rounded-md border text-xs ${currentMin === "1000" && currentMax === null ? "bg-orange-500 text-white border-orange-600" : "hover:bg-muted"}`}>₹1000+</Link>
+                {(currentMin || currentMax) && (
+                  <Link href={buildHref({ minPrice: null, maxPrice: null })} className="px-2 py-1 rounded-md border text-xs hover:bg-muted">Clear price</Link>
+                )}
+              </div>
+            </div>
           </div>
         </aside>
 

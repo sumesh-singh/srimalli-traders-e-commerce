@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { orders, orderItems, users, products, payments } from '@/db/schema';
+import { orders, orderItems, users, products, payments, productImages } from '@/db/schema';
 import { eq, and, desc, asc, gte, lte, like, inArray, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -9,10 +9,6 @@ export async function GET(request: NextRequest) {
     const user = await getCurrentUser(request);
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    if (user.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -25,7 +21,12 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * pageSize;
 
-    let whereConditions = [];
+    let whereConditions = [] as any[];
+
+    // If not admin, restrict to own orders
+    if (user.role !== 'admin') {
+      whereConditions.push(eq(orders.userId, user.id));
+    }
 
     if (status && ['pending', 'paid', 'shipped', 'delivered', 'cancelled'].includes(status)) {
       whereConditions.push(eq(orders.status, status));
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
         .leftJoin(productImages, eq(products.id, productImages.productId))
         .where(inArray(orderItems.orderId, orderIds));
 
-      const payments = await db.select({
+      const paymentRows = await db.select({
         orderId: payments.orderId,
         provider: payments.provider,
         status: payments.status,
@@ -129,7 +130,7 @@ export async function GET(request: NextRequest) {
         orderItemsMap.get(item.orderId)?.push(item);
       });
 
-      payments.forEach(payment => {
+      paymentRows.forEach(payment => {
         paymentMap.set(payment.orderId, payment);
       });
     }
@@ -225,5 +226,3 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
 }
-
-import { productImages } from '@/db/schema';
