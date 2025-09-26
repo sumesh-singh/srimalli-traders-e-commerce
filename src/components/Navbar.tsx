@@ -65,6 +65,13 @@ export const Navbar = () => {
         <nav className="ml-4 hidden sm:flex items-center gap-4 text-sm">
           <Link href="/" className="hover:text-orange-600">Home</Link>
           <Link href="/products" className="hover:text-orange-600">Products</Link>
+          <Link href="/wholesale/register" className="hover:text-orange-600">Wholesale</Link>
+          {session?.user && (
+            <Link href="/orders" className="hover:text-orange-600">Orders</Link>
+          )}
+          {(session as any)?.user?.role === "admin" && (
+            <Link href="/admin" className="hover:text-orange-600">Admin</Link>
+          )}
           <Link href="/cart" className="hover:text-orange-600">Cart</Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">
